@@ -13,7 +13,7 @@ c.read("config.ini", encoding='utf-8')
 
 discord_token = str(c["DISCORD"]["token"])
 ADMIN_ROLES = c["DISCORD"]["admin_roles"]
-ephemeral = bool(c["DISCORD"]["ephemeral"])
+ephemeral = bool(True if str(c["DISCORD"]["ephemeral"]) == "True" else False)
 intents = discord.Intents.default()
 intents.messages = True
 intents.guild_messages = True
@@ -99,7 +99,7 @@ async def list_addresses(interaction: discord.Interaction, network: str):
     db_connection.close()
 
 
-@bot.tree.command(name='add-contact', description='Add a contact for a specific address')
+@bot.tree.command(name='add-contact', description='Add a contact for a specific address.')
 @app_commands.describe(address="The address to add a contact for.", user="The contact to notify if the address is low.")
 async def add_contacts(interaction: discord.Interaction, address: str, user: str):
     db_connection = database.get_db_connection()
@@ -115,7 +115,7 @@ async def add_contacts(interaction: discord.Interaction, address: str, user: str
     return
 
 
-@bot.tree.command(name='remove-contact', description='remove a contact for a specific address')
+@bot.tree.command(name='remove-contact', description='Remove a contact for a specific address.')
 @app_commands.describe(address="The address to remove a contact for.", user="The contact to remove from the address.")
 async def remove_contacts(interaction: discord.Interaction, address: str, user: str):
     db_connection = database.get_db_connection()
@@ -131,7 +131,8 @@ async def remove_contacts(interaction: discord.Interaction, address: str, user: 
     return
 
 
-@bot.tree.command(name='get-contacts', description='$contacts-remove [validator id] @user1 (@user2...)')
+@bot.tree.command(name='get-contacts', description='Get all contacts for a specific address.')
+@app_commands.describe(address="The address to query.")
 async def get_contacts(interaction: discord.Interaction, address: str):
     db_connection = database.get_db_connection()
     if address not in database.get_all_addresses(db_connection, interaction.guild_id):
@@ -144,8 +145,8 @@ async def get_contacts(interaction: discord.Interaction, address: str):
     return
 
 
-@bot.tree.command(name="set-threshold")
-@app_commands.describe(network="Which network?", threshold="The amount to alert on")
+@bot.tree.command(name="set-threshold", description="[Admins only] Set a new threshold for a network.")
+@app_commands.describe(network="The network to set the threshold.", threshold="The minimum tokens to alert on")
 async def set_threshold(interaction: discord.Interaction, network: str, threshold: float):
     admin = False
     for role in interaction.user.roles:
