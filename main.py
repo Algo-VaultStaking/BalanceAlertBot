@@ -12,10 +12,12 @@ c = configparser.ConfigParser()
 c.read("config.ini", encoding='utf-8')
 
 discord_token = str(c["DISCORD"]["token"])
+ADMIN_ROLES = c["DISCORD"]["admin_roles"]
+ephemeral = bool(c["DISCORD"]["ephemeral"])
 intents = discord.Intents.default()
 intents.messages = True
 intents.guild_messages = True
-ephemeral = True
+
 bot = commands.Bot(command_prefix='!', intents=intents)
 
 
@@ -28,8 +30,8 @@ async def on_ready():
 #    print(f"Synced {len(synced)} commands")
 
 
-@bot.tree.command(name="add-address")
-@app_commands.describe(network="Which network?", address="The address to track")
+@bot.tree.command(name="add-address", description="Track the balance of a new address.")
+@app_commands.describe(network="The network of the address.", address="The address to track.")
 async def add_address(interaction: discord.Interaction, network: str, address: str):
     db_connection = database.get_db_connection()
     address = address.lower()
@@ -58,8 +60,8 @@ async def add_address(interaction: discord.Interaction, network: str, address: s
     db_connection.close()
 
 
-@bot.tree.command(name="remove-address")
-@app_commands.describe(network="Which network?", address="The address to remove")
+@bot.tree.command(name="remove-address", description="Stop tracking an address's balance.")
+@app_commands.describe(network="The network of the address", address="The address to remove")
 async def remove_address(interaction: discord.Interaction, network: str, address: str):
     db_connection = database.get_db_connection()
     network = get_network_id(network)
@@ -78,8 +80,8 @@ async def remove_address(interaction: discord.Interaction, network: str, address
     db_connection.close()
 
 
-@bot.tree.command(name="list-addresses")
-@app_commands.describe(network="Which network?")
+@bot.tree.command(name="list-addresses", description="List all addresses for a specific network.")
+@app_commands.describe(network="The network to search.")
 async def list_addresses(interaction: discord.Interaction, network: str):
     db_connection = database.get_db_connection()
     network = get_network_id(network)
@@ -97,7 +99,8 @@ async def list_addresses(interaction: discord.Interaction, network: str):
     db_connection.close()
 
 
-@bot.tree.command(name='add-contact', description='add-contacts @user1 (@user2...)')
+@bot.tree.command(name='add-contact', description='Add a contact for a specific address')
+@app_commands.describe(address="The address to add a contact for.", user="The contact to notify if the address is low.")
 async def add_contacts(interaction: discord.Interaction, address: str, user: str):
     db_connection = database.get_db_connection()
     if address not in database.get_all_addresses(db_connection, interaction.guild_id):
@@ -112,8 +115,8 @@ async def add_contacts(interaction: discord.Interaction, address: str, user: str
     return
 
 
-@bot.tree.command(name='remove-contact', description='$contacts-remove [validator id] @user1 (@user2...)')
-# @commands.has_any_role(*secrets.LISTENER_ROLES)
+@bot.tree.command(name='remove-contact', description='remove a contact for a specific address')
+@app_commands.describe(address="The address to remove a contact for.", user="The contact to remove from the address.")
 async def remove_contacts(interaction: discord.Interaction, address: str, user: str):
     db_connection = database.get_db_connection()
     if address not in database.get_all_addresses(db_connection, interaction.guild_id):
@@ -129,7 +132,6 @@ async def remove_contacts(interaction: discord.Interaction, address: str, user: 
 
 
 @bot.tree.command(name='get-contacts', description='$contacts-remove [validator id] @user1 (@user2...)')
-# @commands.has_any_role(*secrets.LISTENER_ROLES)
 async def get_contacts(interaction: discord.Interaction, address: str):
     db_connection = database.get_db_connection()
     if address not in database.get_all_addresses(db_connection, interaction.guild_id):
@@ -145,11 +147,21 @@ async def get_contacts(interaction: discord.Interaction, address: str):
 @bot.tree.command(name="set-threshold")
 @app_commands.describe(network="Which network?", threshold="The amount to alert on")
 async def set_threshold(interaction: discord.Interaction, network: str, threshold: float):
-    # error handling
+    admin = False
+    for role in interaction.user.roles:
+        if str(role) in ADMIN_ROLES:
+            admin = True
+
+    if not admin:
+        await interaction.response.send_message(f"This command is only available for admins.", ephemeral=ephemeral)
+        return
+
     db_connection = database.get_db_connection()
     network = get_network_id(network)
+
     if network == 0:
         await interaction.response.send_message(f"This chain is not supported.", ephemeral=ephemeral)
+        db_connection.close()
         return
 
     database.set_threshold_in_db(db_connection, network, threshold, interaction.guild_id)

@@ -79,7 +79,7 @@ def initial_setup():
         cur.execute(f"INSERT INTO Networks VALUES(137, \"Polygon Mainnet\", \"Matic\", \"Matic\");")
         cur.execute(f"INSERT INTO Networks VALUES(80001, \"Mumbai Testnet\", \"MaticMum\", \"MaticMum\");")
         cur.execute(f"INSERT INTO Networks VALUES(42161, \"Arbitrum Mainnet\", \"Arbitrum ETH\", \"Arbitrum ETH\");")
-        cur.execute( f"INSERT INTO Networks VALUES(421611, \"Arbitrum Goerli\", \"Arb Goerli ETH\", \"Arb Goerli ETH\");")
+        cur.execute(f"INSERT INTO Networks VALUES(421611, \"Arbitrum Goerli\", \"Arb Goerli ETH\", \"Arb Goerli ETH\");")
 
         cur.execute(f"INSERT INTO Thresholds VALUES(1, 0.5, 837853470136467517);")
         cur.execute(f"INSERT INTO Thresholds VALUES(5, 0.5, 837853470136467517);")
@@ -112,13 +112,24 @@ def initial_setup():
 
 def get_threshold_by_network(db_connection, network: int, guild: int):
     cur = db_connection.cursor()
-    command = f"SELECT defaultThreshold FROM Networks WHERE networkID={network} AND guild={guild};"
+    command = f"SELECT defaultThreshold FROM Thresholds WHERE networkID={network} and guild={guild};"
     try:
         cur.execute(command)
         result = cur.fetchall()[0][0]
     except:
         result = ""
     return result
+
+
+def set_threshold_in_db(db_connection, network: int, threshold: float, guild: int):
+    cur = db_connection.cursor()
+    command = f"UPDATE Thresholds " \
+              f"SET defaultThreshold = {threshold} " \
+              f"WHERE networkID = {network} " \
+              f"AND guild = {guild};"
+    cur.execute(command)
+    db_connection.commit()
+    return None
 
 
 def get_token_abr_by_network(db_connection, network: int):
@@ -145,7 +156,6 @@ def get_network_name_by_id(db_connection, network: int):
 
 def add_address_to_db(db_connection, network: int, address: str, balance: float, guild: int):
     cur = db_connection.cursor()
-    threshold = get_threshold_by_network(db_connection, network, guild)
     addr_list = get_all_addresses_by_network(db_connection, network, guild)
     if address not in addr_list:
         cur.execute(f"INSERT INTO Contacts VALUES (\"{address}\", null, {guild});")
@@ -199,16 +209,6 @@ def get_all_networks(db_connection):
         networkList.append(net[0])
 
     return networkList
-
-
-def set_threshold_in_db(db_connection, network: int, threshold: float, guild: int):
-    cur = db_connection.cursor()
-    command = f"UPDATE Networks " \
-              f"SET defaultThreshold = {threshold} " \
-              f"WHERE networkID = {network} AND guild={guild};"
-    cur.execute(command)
-    db_connection.commit()
-    return None
 
 
 def get_contacts_by_address(db_connection, address: str, guild: int):
@@ -297,3 +297,21 @@ def set_alerting_by_address(db_connection, network: int, address: str, alerting:
     cur.execute(command)
     db_connection.commit()
     return None
+
+
+def get_thresholds_alert_channel_by_guild(db_connection, guild):
+    cur = db_connection.cursor()
+    command = f"SELECT threshold_alert_channel FROM Guilds WHERE guild={guild};"
+    cur.execute(command)
+    cur.execute(command)
+    result: int = cur.fetchall()[0][0]
+    return result
+
+
+# def get_admin_roles_by_guild(db_connection, guild):
+#    cur = db_connection.cursor()
+#    command = f"SELECT admin_roles FROM Guilds WHERE guild={guild};"
+#    cur.execute(command)
+#    cur.execute(command)
+#    result: list = cur.fetchall()[0][0]
+#    return result
