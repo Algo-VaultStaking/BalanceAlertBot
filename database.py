@@ -48,8 +48,9 @@ def initial_setup():
         cur.execute("CREATE TABLE Addresses("
                     "network INT, "
                     "address VARCHAR(70), "
-                    "balance DOUBLE(28, 18),"
-                    "alerting BOOL,"
+                    "label VARCHAR(70), "
+                    "balance DOUBLE(28, 18), "
+                    "alerting BOOL, "
                     "guild BIGINT);")
 
         cur.execute("CREATE TABLE Networks("
@@ -154,17 +155,17 @@ def get_network_name_by_id(db_connection, network: int):
     return result
 
 
-def add_address_to_db(db_connection, network: int, address: str, balance: float, guild: int):
+def add_address_to_db(db_connection, network: int, address: str, label: str, balance: float, guild: int):
     cur = db_connection.cursor()
     addr_list = get_all_addresses_by_network(db_connection, network, guild)
     if address not in addr_list:
         cur.execute(f"INSERT INTO Contacts VALUES (\"{address}\", null, {guild});")
-    cur.execute(f"INSERT INTO Addresses VALUES ({network}, \"{address}\", {balance}, 0, {guild});")
+    cur.execute(f"INSERT INTO Addresses VALUES ({network}, \"{address}\", \"{label}\", {balance}, 0, {guild});")
     db_connection.commit()
     return
 
 
-def remove_address_from_db(db_connection, network, address, guild: int):
+def remove_address_from_db_by_address(db_connection, network, address, guild: int):
     cur = db_connection.cursor()
     command = f"DELETE FROM Addresses WHERE network={network} AND address=\"{address}\" AND guild={guild};"
     cur.execute(command)
@@ -172,28 +173,36 @@ def remove_address_from_db(db_connection, network, address, guild: int):
     return
 
 
+def remove_address_from_db_by_label(db_connection, network, label, guild: int):
+    cur = db_connection.cursor()
+    command = f"DELETE FROM Addresses WHERE network={network} AND label=\"{label}\" AND guild={guild};"
+    cur.execute(command)
+    db_connection.commit()
+    return
+
+
 def get_all_addresses_by_network(db_connection, network: int, guild: int):
     cur = db_connection.cursor()
-    command = f"SELECT address FROM Addresses WHERE network={network} AND guild={guild};"
+    command = f"SELECT address, label FROM Addresses WHERE network={network} AND guild={guild};"
 
     cur.execute(command)
     result = cur.fetchall()
-    addressList = []
-    for addr in result:
-        addressList.append(addr[0])
+    addressList = {}
+    for addr, label in result:
+        addressList[addr] = str(label)
 
     return addressList
 
 
 def get_all_addresses(db_connection, guild: int):
     cur = db_connection.cursor()
-    command = f"SELECT address FROM Addresses WHERE guild={guild};"
+    command = f"SELECT address, label FROM Addresses WHERE guild={guild};"
 
     cur.execute(command)
     result = cur.fetchall()
-    addressList = []
-    for addr in result:
-        addressList.append(addr[0])
+    addressList = {}
+    for addr, label in result:
+        addressList[addr] = str(label)
 
     return addressList
 
@@ -211,6 +220,16 @@ def get_all_networks(db_connection):
     return networkList
 
 
+def get_addresses_by_label(db_connection, label: str, guild: int):
+    cur = db_connection.cursor()
+    command = f"SELECT address FROM Addresses WHERE label=\"{label}\" AND guild={guild};"
+
+    cur.execute(command)
+    result = cur.fetchall()[0][0]
+
+    return result
+
+
 def get_contacts_by_address(db_connection, address: str, guild: int):
     conn = db_connection
     cur = conn.cursor()
@@ -218,7 +237,7 @@ def get_contacts_by_address(db_connection, address: str, guild: int):
     try:
         cur.execute(command)
         fetch = cur.fetchall()[0][0]
-        result = fetch if fetch is not None else "Team"
+        result = fetch if fetch is not None else "None"
     except Exception as e:
         print(f"Error: {e}")
         result = "Team"
@@ -250,6 +269,35 @@ def remove_contacts_for_address(db_connection, address: str, user: str, guild: i
     conn.commit()
 
     return None
+
+
+def remove_contacts_for_label(db_connection, label: str, user: str, guild: int):
+    conn = db_connection
+    cur = conn.cursor()
+    address = get_addresses_by_label(db_connection, label, guild)
+    contacts = str(get_contacts_by_address(db_connection, address, guild)).split(", ")
+    if user in contacts:
+        contacts.remove(user)
+    new_contacts = str(", ".join(contacts))
+    command = f"UPDATE Contacts " \
+              f"SET contacts = '{new_contacts}' " \
+              f"WHERE address = '{address}' AND guild={guild};"
+    cur.execute(command)
+    conn.commit()
+
+    return None
+
+
+def get_balances_by_network(db_connection, network: int, guild: int):
+    cur = db_connection.cursor()
+    command = f"SELECT address, balance FROM Addresses WHERE network={network} AND guild={guild};"
+    cur.execute(command)
+    result = cur.fetchall()
+    addressList = {}
+    for addr, balance in result:
+        addressList[addr] = float(round(balance, 3))
+
+    return addressList
 
 
 def get_balance(network: int, address: str):
