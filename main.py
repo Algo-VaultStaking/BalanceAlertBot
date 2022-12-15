@@ -26,13 +26,13 @@ async def on_ready():
     print(f'Logged in as {bot.user} (ID: {bot.user.id})')
     print('-----------------')
     print("ready")
-#    synced = await bot.tree.sync()
-#    print(f"Synced {len(synced)} commands")
+    synced = await bot.tree.sync()
+    print(f"Synced {len(synced)} commands")
 
 
 @bot.tree.command(name="add-address", description="Track the balance of a new address.")
 @app_commands.describe(network="The network of the address.", address="The address to track.")
-async def add_address(interaction: discord.Interaction, network: str, address: str):
+async def add_address(interaction: discord.Interaction, network: str, address: str, label: str):
     db_connection = database.get_db_connection()
     address = address.lower()
     network = int(get_network_id(network))
@@ -46,7 +46,7 @@ async def add_address(interaction: discord.Interaction, network: str, address: s
         db_connection.close()
         return
 
-    if address in database.get_all_addresses_by_network(db_connection, network, interaction.guild_id):
+    if address in database.get_all_addresses_by_network(db_connection, network, interaction.guild_id).keys():
         await interaction.response.send_message(f"Address is already being tracked.", ephemeral=ephemeral)
         db_connection.close()
         return
@@ -55,61 +55,89 @@ async def add_address(interaction: discord.Interaction, network: str, address: s
                                             f"{database.get_network_name_by_id(db_connection, network)} watch list. ", ephemeral=ephemeral)
 
     addr_balance = database.get_balance(network, address)
-    database.add_address_to_db(db_connection, network, address, addr_balance, interaction.guild_id)
+    database.add_address_to_db(db_connection, network, address, label, addr_balance, interaction.guild_id)
 
     db_connection.close()
 
 
 @bot.tree.command(name="remove-address", description="Stop tracking an address's balance.")
-@app_commands.describe(network="The network of the address", address="The address to remove")
+@app_commands.describe(network="The network of the address", address="The address or label to remove")
 async def remove_address(interaction: discord.Interaction, network: str, address: str):
     db_connection = database.get_db_connection()
     network = get_network_id(network)
     if network == 0:
         await interaction.response.send_message(f"This chain is not supported.", ephemeral=ephemeral)
+        db_connection.close()
         return
 
-    if address not in database.get_all_addresses_by_network(db_connection, network, interaction.guild_id):
-        await interaction.response.send_message(f"Address is not being tracked.", ephemeral=ephemeral)
+    if address not in database.get_all_addresses_by_network(db_connection, network, interaction.guild_id).keys() and \
+            address not in database.get_all_addresses_by_network(db_connection, network, interaction.guild_id).values():
+        await interaction.response.send_message(f"Address/Label is not being tracked.", ephemeral=ephemeral)
+        db_connection.close()
         return
 
-    database.remove_address_from_db(db_connection, network, address, interaction.guild_id)
+    if address[:2] == "0x":
+        database.remove_address_from_db_by_address(db_connection, network, address, interaction.guild_id)
+        await interaction.response.send_message(f"Address {address[:6]}...{address[-4:]} has been removed from the "
+                                                f"{database.get_network_name_by_id(db_connection, network)} watch list.",
+                                                ephemeral=ephemeral)
+    else:
+        database.remove_address_from_db_by_label(db_connection, network, address, interaction.guild_id)
+        await interaction.response.send_message(f"{address} has been removed from the "
+                                                f"{database.get_network_name_by_id(db_connection, network)} watch list.",
+                                                ephemeral=ephemeral)
 
-    await interaction.response.send_message(f"Address {address[:6]}...{address[-4:]} has been removed from the "
-                                            f"{database.get_network_name_by_id(db_connection, network)} watch list.", ephemeral=ephemeral)
     db_connection.close()
 
 
-@bot.tree.command(name="list-addresses", description="List all addresses for a specific network.")
+@bot.tree.command(name="list-balances", description="List all address balances for a specific network.")
 @app_commands.describe(network="The network to search.")
-async def list_addresses(interaction: discord.Interaction, network: str):
+async def list_balances(interaction: discord.Interaction, network: str):
     db_connection = database.get_db_connection()
     network = get_network_id(network)
     if network == 0:
         await interaction.response.send_message(f"This chain is not supported.", ephemeral=ephemeral)
+        db_connection.close()
         return
 
+    network_name = database.get_network_name_by_id(db_connection, network)
     addresses = database.get_all_addresses_by_network(db_connection, network, interaction.guild_id)
+    balances = database.get_balances_by_network(db_connection, network, interaction.guild_id)
+    token = database.get_token_abr_by_network(db_connection, network)
 
-    response = f"The following addresses are being watched on {database.get_network_name_by_id(db_connection, network)}:\n"
+    if addresses == {}:
+        await interaction.response.send_message(f"No address are being tracked on {network_name}", ephemeral=ephemeral)
+        db_connection.close()
+        return
+
+    response = f"The following addresses are being watched on {network_name}:"
     for addr in addresses:
-        response = response + addr + "\n"
+        response = f"{response}\n{addresses[addr]} ({addr[:6]}...{addr[-4:]}) has a balance of {balances[addr]} {token}"
 
     await interaction.response.send_message(response, ephemeral=ephemeral)
     db_connection.close()
 
 
-@bot.tree.command(name='add-contact', description='Add a contact for a specific address.')
-@app_commands.describe(address="The address to add a contact for.", user="The contact to notify if the address is low.")
+@bot.tree.command(name='add-contact', description='Add a contact for a specific address/label.')
+@app_commands.describe(address="The address/label to add a contact for.", user="The contact to notify if the address is low.")
 async def add_contacts(interaction: discord.Interaction, address: str, user: str):
     db_connection = database.get_db_connection()
-    if address not in database.get_all_addresses(db_connection, interaction.guild_id):
+    if address not in database.get_all_addresses(db_connection, interaction.guild_id).keys() and \
+            address not in database.get_all_addresses(db_connection, interaction.guild_id).values():
         await interaction.response.send_message(f"Address is not being tracked.", ephemeral=ephemeral)
         db_connection.close()
         return
 
-    database.add_contacts_for_address(db_connection, user, address, interaction.guild_id)
-    message = address + " now has the following contacts: " + database.get_contacts_by_address(db_connection, address, interaction.guild_id)
+    true_addr = database.get_addresses_by_label(db_connection, address, interaction.guild_id) if address[:2] != "0x" else address
+
+    if user in database.get_contacts_by_address(db_connection, true_addr, interaction.guild_id):
+        await interaction.response.send_message(f"User is already a contact.", ephemeral=ephemeral)
+        db_connection.close()
+        return
+
+    database.add_contacts_for_address(db_connection, user, true_addr, interaction.guild_id)
+
+    message = address + " now has the following contacts: " + database.get_contacts_by_address(db_connection, true_addr, interaction.guild_id)
     await interaction.response.send_message(message, ephemeral=ephemeral)
     db_connection.close()
     return
@@ -119,13 +147,15 @@ async def add_contacts(interaction: discord.Interaction, address: str, user: str
 @app_commands.describe(address="The address to remove a contact for.", user="The contact to remove from the address.")
 async def remove_contacts(interaction: discord.Interaction, address: str, user: str):
     db_connection = database.get_db_connection()
-    if address not in database.get_all_addresses(db_connection, interaction.guild_id):
+    true_addr = database.get_addresses_by_label(db_connection, address, interaction.guild_id) if address[:2] != "0x" else address
+
+    if true_addr not in database.get_all_addresses(db_connection, interaction.guild_id).keys():
         await interaction.response.send_message(f"Address is not being tracked.", ephemeral=ephemeral)
         db_connection.close()
         return
 
-    database.remove_contacts_for_address(db_connection, address, user, interaction.guild_id)
-    message = address + " now has the following contacts: " + database.get_contacts_by_address(db_connection, address, interaction.guild_id)
+    database.remove_contacts_for_address(db_connection, true_addr, user, interaction.guild_id)
+    message = address + " now has the following contacts: " + database.get_contacts_by_address(db_connection, true_addr, interaction.guild_id)
     await interaction.response.send_message(message, ephemeral=ephemeral)
     db_connection.close()
     return
@@ -135,12 +165,14 @@ async def remove_contacts(interaction: discord.Interaction, address: str, user: 
 @app_commands.describe(address="The address to query.")
 async def get_contacts(interaction: discord.Interaction, address: str):
     db_connection = database.get_db_connection()
-    if address not in database.get_all_addresses(db_connection, interaction.guild_id):
+    true_addr = database.get_addresses_by_label(db_connection, address, interaction.guild_id) if address[:2] != "0x" else address
+
+    if true_addr not in database.get_all_addresses(db_connection, interaction.guild_id).keys():
         await interaction.response.send_message(f"Address is not being tracked.", ephemeral=ephemeral)
         db_connection.close()
         return
-    message = address + " has the following contacts: " + database.get_contacts_by_address(db_connection, address, interaction.guild_id)
-    await interaction.response.send_message(message)
+    message = address + " has the following contacts: " + database.get_contacts_by_address(db_connection, true_addr, interaction.guild_id)
+    await interaction.response.send_message(message, ephemeral=ephemeral)
     db_connection.close()
     return
 
