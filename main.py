@@ -147,6 +147,12 @@ async def add_contacts(interaction: discord.Interaction, address: str, user: str
 @app_commands.describe(address="The address to remove a contact for.", user="The contact to remove from the address.")
 async def remove_contacts(interaction: discord.Interaction, address: str, user: str):
     db_connection = database.get_db_connection()
+    if address not in database.get_all_addresses(db_connection, interaction.guild_id).keys() and \
+            address not in database.get_all_addresses(db_connection, interaction.guild_id).values():
+        await interaction.response.send_message(f"Address is not being tracked.", ephemeral=ephemeral)
+        db_connection.close()
+        return
+
     true_addr = database.get_addresses_by_label(db_connection, address, interaction.guild_id) if address[:2] != "0x" else address
 
     if true_addr not in database.get_all_addresses(db_connection, interaction.guild_id).keys():
@@ -165,6 +171,12 @@ async def remove_contacts(interaction: discord.Interaction, address: str, user: 
 @app_commands.describe(address="The address to query.")
 async def get_contacts(interaction: discord.Interaction, address: str):
     db_connection = database.get_db_connection()
+    if address not in database.get_all_addresses(db_connection, interaction.guild_id).keys() and \
+            address not in database.get_all_addresses(db_connection, interaction.guild_id).values():
+        await interaction.response.send_message(f"Address is not being tracked.", ephemeral=ephemeral)
+        db_connection.close()
+        return
+
     true_addr = database.get_addresses_by_label(db_connection, address, interaction.guild_id) if address[:2] != "0x" else address
 
     if true_addr not in database.get_all_addresses(db_connection, interaction.guild_id).keys():
