@@ -1,9 +1,10 @@
 import configparser
+import json
 import re
 
 import discord
 from discord import app_commands
-from discord.ext import commands
+from discord.ext import commands, tasks
 
 import database
 
@@ -14,6 +15,9 @@ c.read("config.ini", encoding='utf-8')
 discord_token = str(c["DISCORD"]["token"])
 ADMIN_ROLES = c["DISCORD"]["admin_roles"]
 ephemeral = bool(True if str(c["DISCORD"]["ephemeral"]) == "True" else False)
+guilds = json.loads(c["DISCORD"]["guilds"])
+threshold_response_channel = int(c["DISCORD"]["threshold_response_channel"])
+e_channel = int(c["DISCORD"]["error_channel"])
 intents = discord.Intents.default()
 intents.messages = True
 intents.guild_messages = True
@@ -28,6 +32,7 @@ async def on_ready():
     print("ready")
     synced = await bot.tree.sync()
     print(f"Synced {len(synced)} commands")
+    check_thresholds.start()
 
 
 @bot.tree.command(name="add-address", description="Track the balance of a new address.")
@@ -240,6 +245,40 @@ def valid_address(address):
     if len(address) == 42 and re.search('0[xX][0-9a-fA-F]{40}', address) and ('[' not in address):
         return True
     return False
+
+
+@tasks.loop(minutes=1)
+async def check_thresholds():
+    db_connection = database.get_db_connection()
+
+    await bot.wait_until_ready()
+    print("updating validators")
+    threshold_channel = bot.get_channel(threshold_response_channel)
+
+    for guild in guilds:
+        guild = int(guild)
+        for network in database.get_all_networks(db_connection):
+            threshold: float = database.get_threshold_by_network(db_connection, network, guild)
+            for address in database.get_all_addresses_by_network(db_connection, network, guild):
+
+                balance: float = database.get_balance(network, address)
+                database.update_balance(db_connection, network, address, balance)
+                alerting = database.get_alerting_by_address(db_connection, network, address)
+
+                if (balance < threshold) and not alerting:
+                    contacts = database.get_contacts_by_address(db_connection, address, guild)
+                    await threshold_channel.send(f"{contacts}, **{address}** is below the threshold of {threshold} "
+                                                 f"{database.get_token_abr_by_network(db_connection, network)}")
+                    database.set_alerting_by_address(db_connection, network, address, True)
+
+                if (balance > threshold) and alerting:
+                    contacts = database.get_contacts_by_address(db_connection, address, guild)
+                    await threshold_channel.send(f"{contacts}, **{address}** is back above the threshold of {threshold} "
+                                                 f"{database.get_token_abr_by_network(db_connection, network)}")
+                    database.set_alerting_by_address(db_connection, network, address, False)
+
+    db_connection.close()
+    return
 
 
 bot.run(discord_token)
