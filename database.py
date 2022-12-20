@@ -257,7 +257,10 @@ def get_contacts_by_address(db_connection, address: str, guild: int):
 def add_contacts_for_address(db_connection, contacts: str, address: str, guild: int):
     cur = db_connection.cursor()
     current_contacts = get_contacts_by_address(db_connection, address, guild)
-    new_contacts = (current_contacts + ", " + contacts) if current_contacts != "Team" else contacts
+    if len(current_contacts) == 0 or current_contacts == "Team":
+        new_contacts = contacts
+    else:
+        new_contacts = current_contacts + ", " + contacts
     command = f"UPDATE Contacts " \
               f"SET contacts = '{new_contacts}' " \
               f"WHERE address = '{address}' AND guild={guild};"
