@@ -166,7 +166,11 @@ async def remove_contacts(interaction: discord.Interaction, address: str, user: 
         return
 
     database.remove_contacts_for_address(db_connection, true_addr, user, interaction.guild_id)
-    message = address + " now has the following contacts: " + database.get_contacts_by_address(db_connection, true_addr, interaction.guild_id)
+    contacts = database.get_contacts_by_address(db_connection, true_addr, interaction.guild_id)
+    if len(contacts) == 0:
+        message = address + " does not have any contacts."
+    else:
+        message = address + " now has the following contacts: " + contacts
     await interaction.response.send_message(message, ephemeral=ephemeral)
     db_connection.close()
     return
