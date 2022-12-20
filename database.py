@@ -230,6 +230,16 @@ def get_addresses_by_label(db_connection, label: str, guild: int):
     return result
 
 
+def get_label_by_address(db_connection, address: str, guild: int):
+    cur = db_connection.cursor()
+    command = f"SELECT label FROM Addresses WHERE address=\"{address}\" AND guild={guild};"
+
+    cur.execute(command)
+    result = cur.fetchall()[0][0]
+
+    return result
+
+
 def get_contacts_by_address(db_connection, address: str, guild: int):
     conn = db_connection
     cur = conn.cursor()
