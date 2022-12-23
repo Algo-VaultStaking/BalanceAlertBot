@@ -152,10 +152,10 @@ async def add_contacts(interaction: discord.Interaction, address: str, user: str
         db_connection.close()
         return
 
-    if not re.search('^<@[0-9]*>$', user):
-        await interaction.response.send_message(f"Please tag a user in the User field.", ephemeral=ephemeral)
-        db_connection.close()
-        return
+#    if not re.search('^<@[0-9]*>$', user):
+#        await interaction.response.send_message(f"Please tag a user in the User field.", ephemeral=ephemeral)
+#        db_connection.close()
+#        return
 
     true_addr = database.get_addresses_by_label(db_connection, address, interaction.guild_id) if address[:2] != "0x" else address
 
