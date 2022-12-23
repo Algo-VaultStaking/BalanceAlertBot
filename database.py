@@ -133,6 +133,29 @@ def set_threshold_in_db(db_connection, network: int, threshold: float, guild: in
     return None
 
 
+def get_alert_channel_in_db(db_connection, guild: int):
+    cur = db_connection.cursor()
+    command = f"SELECT threshold_alert_channel " \
+              f"FROM Guilds " \
+              f"WHERE guild = {guild};"
+    try:
+        cur.execute(command)
+        result = cur.fetchall()[0][0]
+    except:
+        result = ""
+    return result
+
+
+def set_alert_channel_in_db(db_connection, channel: int, guild: int):
+    cur = db_connection.cursor()
+    command = f"UPDATE Guilds " \
+              f"SET threshold_alert_channel = {channel} " \
+              f"WHERE guild = {guild};"
+    cur.execute(command)
+    db_connection.commit()
+    return None
+
+
 def get_token_abr_by_network(db_connection, network: int):
     cur = db_connection.cursor()
     command = f"SELECT tokenAbr FROM Networks WHERE networkID={network};"
