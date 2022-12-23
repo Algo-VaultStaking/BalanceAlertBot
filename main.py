@@ -291,7 +291,7 @@ def valid_address(address):
     return False
 
 
-@tasks.loop(minutes=1)
+@tasks.loop(minutes=5)
 async def check_thresholds():
     db_connection = database.get_db_connection()
 
