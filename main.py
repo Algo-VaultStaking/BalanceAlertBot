@@ -123,6 +123,25 @@ async def list_balances(interaction: discord.Interaction, network: str):
     db_connection.close()
 
 
+@bot.tree.command(name="list-networks", description="List all available networks.")
+@app_commands.describe()
+async def list_networks(interaction: discord.Interaction):
+    response = "The following networks are available, and either the name or ID can be used in commands:\n" \
+               "Ethereum (ID: 1)\n" \
+               "Ethereum Goerli (ID: 5)\n" \
+               "Arbitrum (ID: 42161)\n" \
+               "Arbitrum Goerli (ID: 421611)\n" \
+               "BNB Chain (ID: 56)\n" \
+               "BNB Chain Testnet (ID: 97)\n" \
+               "Polygon (ID: 137)\n" \
+               "Polygon Mumbai (ID: 80001)\n" \
+               "Optimism (Coming Soon)\n" \
+               "Optimism Goerli (Coming Soon)\n" \
+               "Gnosis(Coming Soon)"
+
+    await interaction.response.send_message(response, ephemeral=ephemeral)
+
+
 @bot.tree.command(name='add-contact', description='Add a contact for a specific address/label.')
 @app_commands.describe(address="The address/label to add a contact for.", user="The contact to notify if the address is low.")
 async def add_contacts(interaction: discord.Interaction, address: str, user: str):
@@ -221,6 +240,27 @@ async def set_threshold(interaction: discord.Interaction, network: str, threshol
     database.set_threshold_in_db(db_connection, network, threshold, interaction.guild_id)
     await interaction.response.send_message(
         f"{database.get_network_name_by_id(db_connection, network)}'s threshold has been updated to {threshold}.", ephemeral=ephemeral)
+    db_connection.close()
+    return
+
+
+@bot.tree.command(name="set-alerting-channel", description="[Admins only] Change which channel receives threshold alerts.")
+@app_commands.describe(channel_id="The ID of the channel that should receive alert messages (right-click the channel, click Copy ID).")
+async def set_alerting_channel(interaction: discord.Interaction, channel_id: str):
+    admin = False
+    for role in interaction.user.roles:
+        if str(role) in ADMIN_ROLES:
+            admin = True
+
+    if not admin:
+        await interaction.response.send_message(f"This command is only available for admins.", ephemeral=ephemeral)
+        return
+
+    db_connection = database.get_db_connection()
+    channel = int(channel_id)
+    database.set_alert_channel_in_db(db_connection, channel, interaction.guild_id)
+    await interaction.response.send_message(
+        f"The alert channel has been updated to <#{database.get_alert_channel_in_db(db_connection, interaction.guild_id)}>.", ephemeral=ephemeral)
     db_connection.close()
     return
 
