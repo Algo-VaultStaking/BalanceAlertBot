@@ -30,9 +30,8 @@ async def on_ready():
     print(f'Logged in as {bot.user} (ID: {bot.user.id})')
     print('-----------------')
     print("ready")
-    synced = await bot.tree.sync()
-    print(f"Synced {len(synced)} commands")
-    check_thresholds.start()
+#    synced = await bot.tree.sync()
+#    print(f"Synced {len(synced)} commands")
 
 
 @bot.tree.command(name="add-address", description="Track the balance of a new address.")
@@ -152,10 +151,10 @@ async def add_contacts(interaction: discord.Interaction, address: str, user: str
         db_connection.close()
         return
 
-#    if not re.search('^<@[0-9]*>$', user):
-#        await interaction.response.send_message(f"Please tag a user in the User field.", ephemeral=ephemeral)
-#        db_connection.close()
-#        return
+    if not re.search('^<@[0-9]*>$', user):
+        await interaction.response.send_message(f"Please tag a user in the User field.", ephemeral=ephemeral)
+        db_connection.close()
+        return
 
     true_addr = database.get_addresses_by_label(db_connection, address, interaction.guild_id) if address[:2] != "0x" else address
 
@@ -216,7 +215,12 @@ async def get_contacts(interaction: discord.Interaction, address: str):
         await interaction.response.send_message(f"Address is not being tracked.", ephemeral=ephemeral)
         db_connection.close()
         return
-    message = address + " has the following contacts: " + database.get_contacts_by_address(db_connection, true_addr, interaction.guild_id)
+
+    contacts = database.get_contacts_by_address(db_connection, true_addr, interaction.guild_id)
+    if contacts == "None":
+        message = address + " does not have any contacts."
+    else:
+        message = address + " has the following contacts: " + contacts
     await interaction.response.send_message(message, ephemeral=ephemeral)
     db_connection.close()
     return
@@ -294,41 +298,6 @@ def valid_address(address):
     if len(address) == 42 and re.search('0[xX][0-9a-fA-F]{40}', address) and ('[' not in address):
         return True
     return False
-
-
-@tasks.loop(minutes=5)
-async def check_thresholds():
-    db_connection = database.get_db_connection()
-
-    await bot.wait_until_ready()
-    print("updating validators")
-    threshold_channel = bot.get_channel(threshold_response_channel)
-
-    for guild in guilds:
-        guild = int(guild)
-        for network in database.get_all_networks(db_connection):
-            threshold: float = database.get_threshold_by_network(db_connection, network, guild)
-            addresses = database.get_all_addresses_by_network(db_connection, network, guild)
-            for address in addresses:
-
-                balance: float = database.get_balance(network, address)
-                database.update_balance(db_connection, network, address, balance)
-                alerting = database.get_alerting_by_address(db_connection, network, address)
-
-                if (balance < threshold) and not alerting:
-                    contacts = database.get_contacts_by_address(db_connection, address, guild)
-                    await threshold_channel.send(f"{contacts}, **{addresses[address]} ({address[:6]}...{address[-4:]})** is below the threshold of {threshold} "
-                                                 f"{database.get_token_abr_by_network(db_connection, network)}")
-                    database.set_alerting_by_address(db_connection, network, address, True)
-
-                if (balance > threshold) and alerting:
-                    contacts = database.get_contacts_by_address(db_connection, address, guild)
-                    await threshold_channel.send(f"{contacts}, **{addresses[address]} ({address[:6]}...{address[-4:]})** is back above the threshold of {threshold} "
-                                                 f"{database.get_token_abr_by_network(db_connection, network)}")
-                    database.set_alerting_by_address(db_connection, network, address, False)
-
-    db_connection.close()
-    return
 
 
 bot.run(discord_token)
