@@ -280,7 +280,7 @@ def get_contacts_by_address(db_connection, address: str, guild: int):
 def add_contacts_for_address(db_connection, contacts: str, address: str, guild: int):
     cur = db_connection.cursor()
     current_contacts = get_contacts_by_address(db_connection, address, guild)
-    if len(current_contacts) == 0 or current_contacts == "Team":
+    if len(current_contacts) == 0 or current_contacts == "Team" or current_contacts == "None":
         new_contacts = contacts
     else:
         new_contacts = current_contacts + ", " + contacts
