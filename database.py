@@ -2,6 +2,7 @@ import configparser
 import datetime
 import json
 
+from web3 import Web3
 import mariadb
 
 # Load config
@@ -338,6 +339,41 @@ def get_balances_by_network(db_connection, network: int, guild: int):
 
 def get_balance(network: int, address: str):
     start = datetime.datetime.now()
+    rpc_url = ""
+
+    if network == 1:
+        rpc_url = "https://mainnet.infura.io/v3/5669c7eb29464cbe8957e4ca088a05a6"
+    elif network == 5:
+        rpc_url = "https://goerli.infura.io/v3/5669c7eb29464cbe8957e4ca088a05a6"
+    elif network == 56:
+        rpc_url = "https://bsc-dataseed1.binance.org/"
+    elif network == 97:
+        rpc_url = "https://data-seed-prebsc-1-s1.binance.org:8545"
+    elif network == 137:
+        rpc_url = "https://polygon-rpc.com"
+    elif network == 80001:
+        rpc_url = "https://rpc-mumbai.maticvigil.com"
+    elif network == 42161:
+        rpc_url = "https://arbitrum-mainnet.infura.io/v3/5669c7eb29464cbe8957e4ca088a05a6"
+    elif network == 421611:
+        rpc_url = "https://arbitrum-goerli.infura.io/v3/5669c7eb29464cbe8957e4ca088a05a6"
+    elif network == 10:
+        rpc_url = "https://optimism-mainnet.infura.io/v3/5669c7eb29464cbe8957e4ca088a05a6"
+    elif network == 420:
+        rpc_url = "https://optimism-goerli.infura.io/v3/5669c7eb29464cbe8957e4ca088a05a6"
+    else:
+        return
+
+    w3 = Web3(Web3.HTTPProvider(rpc_url))
+    end = datetime.datetime.now()
+    print(f"retrieved balance of {address} in: " + str(end - start))
+    balance = int(w3.eth.getBalance(address)) / int(1e18)
+
+    return balance
+
+
+def get_balance_covalent(network: int, address: str):
+    start = datetime.datetime.now()
     request = json.loads(requests.get(f"https://api.covalenthq.com/v1/{network}/address/{address}/balances_v2/"
                                       f"?quote-currency=USD&format=JSON&nft=false&no-nft-fetch=false&key=ckey_3f4ecca3d97f4afdaf0b4fb4739").text)
 
@@ -346,7 +382,9 @@ def get_balance(network: int, address: str):
 
     for token in request["data"]["items"]:
         if token["native_token"]:
-            balance = int(token["balance"]) / int(10 ** token["contract_decimals"])
+            decimals = token["contract_decimals"]
+            balance = int(token["balance"]) / int(10 ** decimals)
+            print(f"{network} decimals {decimals}")
             return balance
 
 

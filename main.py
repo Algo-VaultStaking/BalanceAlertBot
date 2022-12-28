@@ -38,8 +38,10 @@ async def on_ready():
 @app_commands.describe(network="The network of the address.", address="The address to track.")
 async def add_address(interaction: discord.Interaction, network: str, address: str, label: str):
     db_connection = database.get_db_connection()
-    address = address.lower()
     network = int(get_network_id(network))
+    addr_balance = database.get_balance(network, address)
+    address = address.lower()
+
     if network == 0:
         await interaction.response.send_message(f"This chain is not supported.", ephemeral=ephemeral)
         db_connection.close()
@@ -58,7 +60,6 @@ async def add_address(interaction: discord.Interaction, network: str, address: s
     await interaction.response.send_message(f"Address {address[:6]}...{address[-4:]} has been added to the "
                                             f"{database.get_network_name_by_id(db_connection, network)} watch list. ", ephemeral=ephemeral)
 
-    addr_balance = database.get_balance(network, address)
     database.add_address_to_db(db_connection, network, address, label, addr_balance, interaction.guild_id)
 
     db_connection.close()
@@ -118,6 +119,27 @@ async def list_balances(interaction: discord.Interaction, network: str):
     for addr in addresses:
         response = f"{response}\n{addresses[addr]} ({addr[:6]}...{addr[-4:]}) has a balance of {balances[addr]} {token}"
 
+    await interaction.response.send_message(response, ephemeral=ephemeral)
+    db_connection.close()
+
+
+@bot.tree.command(name="list-all-balances", description="List all address balances for all networks.")
+@app_commands.describe()
+async def list_all_balances(interaction: discord.Interaction):
+    db_connection = database.get_db_connection()
+    response = ""
+    for network in get_all_network_ids():
+        network_name = database.get_network_name_by_id(db_connection, network)
+        addresses = database.get_all_addresses_by_network(db_connection, network, interaction.guild_id)
+        balances = database.get_balances_by_network(db_connection, network, interaction.guild_id)
+        token = database.get_token_abr_by_network(db_connection, network)
+
+        if addresses != {}:
+            response += f"The following addresses are being watched on **{network_name}**:\n"
+            for addr in addresses:
+                response += f"{addresses[addr]} ({addr[:6]}...{addr[-4:]}) has a balance of {balances[addr]} {token}\n"
+
+            response += "\n"
     await interaction.response.send_message(response, ephemeral=ephemeral)
     db_connection.close()
 
@@ -274,6 +296,10 @@ async def set_alerting_channel(interaction: discord.Interaction, channel_id: str
     return
 
 
+def get_all_network_ids():
+    return [1, 5, 56, 97, 137, 80001, 42161, 421611, 10, 420]
+
+
 def get_network_id(network: str):
     if network.lower() == "ethereum" or network.lower() == "ethereum mainnet" or network == "1":
         return 1
@@ -291,6 +317,12 @@ def get_network_id(network: str):
         return 42161
     elif network.lower() == "arbitrum goerli" or network.lower() == "arbitrum testnet" or network == "421611":
         return 421611
+    elif network.lower() == "optimism" or network.lower() == "optimism mainnet" or network == "10":
+        return 0  # 10
+    elif network.lower() == "optimism goerli" or network.lower() == "optimism testnet" or network == "420":
+        return 0  # 420
+    elif network.lower() == "gnosis" or network.lower() == "gnosis chain" or network == "420":
+        return 0  # 420
     return 0
 
 
