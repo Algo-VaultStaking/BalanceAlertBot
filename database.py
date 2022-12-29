@@ -82,6 +82,9 @@ def initial_setup():
         cur.execute(f"INSERT INTO Networks VALUES(80001, \"Mumbai Testnet\", \"MaticMum\", \"MaticMum\");")
         cur.execute(f"INSERT INTO Networks VALUES(42161, \"Arbitrum Mainnet\", \"Arbitrum ETH\", \"Arbitrum ETH\");")
         cur.execute(f"INSERT INTO Networks VALUES(421611, \"Arbitrum Goerli\", \"Arb Goerli ETH\", \"Arb Goerli ETH\");")
+        cur.execute(f"INSERT INTO Networks VALUES(10, \"Optimism Mainnet\", \"Optimism ETH\", \"Optimism ETH\");")
+        cur.execute(f"INSERT INTO Networks VALUES(420, \"Optimism Goerli\", \"Opt Goerli ETH\", \"Opt Goerli ETH\");")
+        cur.execute(f"INSERT INTO Networks VALUES(100, \"Gnosis Chain\", \"xDai\", \"xDai\");")
 
         cur.execute(f"INSERT INTO Thresholds VALUES(1, 0.5, 837853470136467517);")
         cur.execute(f"INSERT INTO Thresholds VALUES(5, 0.5, 837853470136467517);")
@@ -91,6 +94,9 @@ def initial_setup():
         cur.execute(f"INSERT INTO Thresholds VALUES(80001, 0.5, 837853470136467517);")
         cur.execute(f"INSERT INTO Thresholds VALUES(42161, 0.5, 837853470136467517);")
         cur.execute(f"INSERT INTO Thresholds VALUES(421611, 0.5, 837853470136467517);")
+        cur.execute(f"INSERT INTO Thresholds VALUES(10, 0.5, 837853470136467517);")
+        cur.execute(f"INSERT INTO Thresholds VALUES(420, 0.5, 837853470136467517);")
+        cur.execute(f"INSERT INTO Thresholds VALUES(100, 0.5, 837853470136467517);")
 
         cur.execute(f"INSERT INTO Thresholds VALUES(1, 0.5, 454734546869551114);")
         cur.execute(f"INSERT INTO Thresholds VALUES(5, 0.5, 454734546869551114);")
@@ -100,6 +106,9 @@ def initial_setup():
         cur.execute(f"INSERT INTO Thresholds VALUES(80001, 0.5, 454734546869551114);")
         cur.execute(f"INSERT INTO Thresholds VALUES(42161, 0.5, 454734546869551114);")
         cur.execute(f"INSERT INTO Thresholds VALUES(421611, 0.5, 454734546869551114);")
+        cur.execute(f"INSERT INTO Thresholds VALUES(10, 0.5, 454734546869551114);")
+        cur.execute(f"INSERT INTO Thresholds VALUES(420, 0.5, 454734546869551114);")
+        cur.execute(f"INSERT INTO Thresholds VALUES(100, 0.5, 454734546869551114);")
 
         cur.execute(f"INSERT INTO Guilds VALUES(837853470136467517, 1001486994511237120);")  # Vault Staking
         cur.execute(f"INSERT INTO Guilds VALUES(454734546869551114, 953971443996180510);")  # Connext
@@ -361,6 +370,8 @@ def get_balance(network: int, address: str):
         rpc_url = "https://optimism-mainnet.infura.io/v3/5669c7eb29464cbe8957e4ca088a05a6"
     elif network == 420:
         rpc_url = "https://optimism-goerli.infura.io/v3/5669c7eb29464cbe8957e4ca088a05a6"
+    elif network == 100:
+        rpc_url = "http://gnosis-rpc.vaultstaking.com:8545"
     else:
         return
 

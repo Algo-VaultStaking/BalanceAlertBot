@@ -243,7 +243,7 @@ async def get_contacts(interaction: discord.Interaction, address: str):
         return
 
     contacts = database.get_contacts_by_address(db_connection, true_addr, interaction.guild_id)
-    if contacts == "None":
+    if len(contacts) == 0 or contacts == "None":
         message = address + " does not have any contacts."
     else:
         message = address + " has the following contacts: " + contacts
@@ -322,11 +322,11 @@ def get_network_id(network: str):
     elif network.lower() == "arbitrum goerli" or network.lower() == "arbitrum testnet" or network == "421611":
         return 421611
     elif network.lower() == "optimism" or network.lower() == "optimism mainnet" or network == "10":
-        return 0  # 10
+        return 10
     elif network.lower() == "optimism goerli" or network.lower() == "optimism testnet" or network == "420":
-        return 0  # 420
-    elif network.lower() == "gnosis" or network.lower() == "gnosis chain" or network == "420":
-        return 0  # 420
+        return 420
+    elif network.lower() == "gnosis" or network.lower() == "gnosis chain" or network == "100":
+        return 100
     return 0
 
 
