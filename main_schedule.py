@@ -30,7 +30,7 @@ async def on_ready():
     check_thresholds.start()
 
 
-@tasks.loop(minutes=5)
+@tasks.loop(minutes=1)
 async def check_thresholds():
     db_connection = database.get_db_connection()
 

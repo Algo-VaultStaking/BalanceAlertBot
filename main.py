@@ -5,6 +5,7 @@ import re
 import discord
 from discord import app_commands
 from discord.ext import commands, tasks
+from web3 import Web3
 
 import database
 
@@ -39,8 +40,6 @@ async def on_ready():
 async def add_address(interaction: discord.Interaction, network: str, address: str, label: str):
     db_connection = database.get_db_connection()
     network = int(get_network_id(network))
-    addr_balance = database.get_balance(network, address)
-    address = address.lower()
 
     if network == 0:
         await interaction.response.send_message(f"This chain is not supported.", ephemeral=ephemeral)
@@ -52,15 +51,20 @@ async def add_address(interaction: discord.Interaction, network: str, address: s
         db_connection.close()
         return
 
+    address = Web3.toChecksumAddress(address)
+
     if address in database.get_all_addresses_by_network(db_connection, network, interaction.guild_id).keys():
         await interaction.response.send_message(f"Address is already being tracked.", ephemeral=ephemeral)
         db_connection.close()
         return
 
-    await interaction.response.send_message(f"Address {address[:6]}...{address[-4:]} has been added to the "
-                                            f"{database.get_network_name_by_id(db_connection, network)} watch list. ", ephemeral=ephemeral)
-
+    addr_balance = database.get_balance(network, address)
     database.add_address_to_db(db_connection, network, address, label, addr_balance, interaction.guild_id)
+    token_abr = database.get_token_abr_by_network(db_connection, network)
+
+    await interaction.response.send_message(f"Address {address[:6]}...{address[-4:]} has been added to the "
+                                            f"{database.get_network_name_by_id(db_connection, network)} watch list.\n"
+                                            f"It has a balance of {round(addr_balance,3)} {token_abr}.", ephemeral=ephemeral)
 
     db_connection.close()
 
@@ -212,7 +216,7 @@ async def remove_contacts(interaction: discord.Interaction, address: str, user: 
 
     database.remove_contacts_for_address(db_connection, true_addr, user, interaction.guild_id)
     contacts = database.get_contacts_by_address(db_connection, true_addr, interaction.guild_id)
-    if len(contacts) == 0:
+    if len(contacts) == 0 or contacts == "None":
         message = address + " does not have any contacts."
     else:
         message = address + " now has the following contacts: " + contacts
@@ -327,7 +331,7 @@ def get_network_id(network: str):
 
 
 def valid_address(address):
-    if len(address) == 42 and re.search('0[xX][0-9a-fA-F]{40}', address) and ('[' not in address):
+    if len(address) == 42 and re.search('^0[xX][0-9a-fA-F]{40}', address) and ('[' not in address):
         return True
     return False
 

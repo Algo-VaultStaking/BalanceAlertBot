@@ -437,3 +437,23 @@ def get_thresholds_alert_channel_by_guild(db_connection, guild):
 #    cur.execute(command)
 #    result: list = cur.fetchall()[0][0]
 #    return result
+
+
+def checksum_addresses():
+    conn = mariadb.connect(
+        user="admin",
+        password="Gmu021CRDS",
+        host="polygonfaucet.cv22qgehshjs.us-east-1.rds.amazonaws.com",
+        port=3306,
+        database="addressbot")
+    cur = conn.cursor()
+    command = "SELECT address from Contacts"
+    cur.execute(command)
+    result = cur.fetchall()
+    for addr in result:
+        print(addr[0])
+        command = f"UPDATE Contacts " \
+                  f"SET address = \"{Web3.toChecksumAddress(addr[0])}\" " \
+                  f"WHERE address = \"{addr[0]}\";"
+        cur.execute(command)
+        conn.commit()
