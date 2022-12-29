@@ -48,11 +48,12 @@ async def check_thresholds():
                 balance: float = database.get_balance(network, address)
                 database.update_balance(db_connection, network, address, balance)
                 alerting = database.get_alerting_by_address(db_connection, network, address)
+                token_abr = database.get_token_abr_by_network(db_connection, network)
 
                 if (balance < threshold) and not alerting:
                     contacts = database.get_contacts_by_address(db_connection, address, guild)
                     await threshold_channel.send(f"{contacts}, **{addresses[address]} ({address[:6]}...{address[-4:]})** is below the threshold of {threshold} "
-                                                 f"{database.get_token_abr_by_network(db_connection, network)}")
+                                                 f"{token_abr}. It currently has a balance of {round(balance, 3)} {token_abr}.")
                     database.set_alerting_by_address(db_connection, network, address, True)
 
                 if (balance > threshold) and alerting:
