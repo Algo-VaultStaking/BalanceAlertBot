@@ -311,6 +311,7 @@ def remove_contacts_for_address(db_connection, address: str, user: str, guild: i
     command = f"UPDATE Contacts " \
               f"SET contacts = '{new_contacts}' " \
               f"WHERE address = '{address}' AND guild={guild};"
+
     cur.execute(command)
     conn.commit()
 
