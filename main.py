@@ -160,9 +160,9 @@ async def list_networks(interaction: discord.Interaction):
                "BNB Chain Testnet (ID: 97)\n" \
                "Polygon (ID: 137)\n" \
                "Polygon Mumbai (ID: 80001)\n" \
-               "Optimism (Coming Soon)\n" \
-               "Optimism Goerli (Coming Soon)\n" \
-               "Gnosis(Coming Soon)"
+               "Optimism (ID: 10)\n" \
+               "Optimism Goerli (ID: 420)\n" \
+               "Gnosis(ID: 100)"
 
     await interaction.response.send_message(response, ephemeral=ephemeral)
 
