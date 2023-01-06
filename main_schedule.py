@@ -14,7 +14,6 @@ c.read("config.ini", encoding='utf-8')
 
 discord_token = str(c["DISCORD"]["token"])
 guilds = json.loads(c["DISCORD"]["guilds"])
-threshold_response_channel = int(c["DISCORD"]["threshold_response_channel"])
 e_channel = int(c["DISCORD"]["error_channel"])
 intents = discord.Intents.default()
 intents.messages = False
@@ -30,16 +29,16 @@ async def on_ready():
     check_thresholds.start()
 
 
-@tasks.loop(minutes=1)
+@tasks.loop(minutes=10)
 async def check_thresholds():
     db_connection = database.get_db_connection()
 
     await bot.wait_until_ready()
     print("updating validators")
-    threshold_channel = bot.get_channel(threshold_response_channel)
 
     for guild in guilds:
         guild = int(guild)
+        threshold_channel = bot.get_channel(database.get_alert_channel_in_db(db_connection, guild))
         for network in database.get_all_networks(db_connection):
             threshold: float = database.get_threshold_by_network(db_connection, network, guild)
             addresses = database.get_all_addresses_by_network(db_connection, network, guild)

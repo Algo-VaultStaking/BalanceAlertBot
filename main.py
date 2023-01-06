@@ -17,7 +17,6 @@ discord_token = str(c["DISCORD"]["token"])
 ADMIN_ROLES = c["DISCORD"]["admin_roles"]
 ephemeral = bool(True if str(c["DISCORD"]["ephemeral"]) == "True" else False)
 guilds = json.loads(c["DISCORD"]["guilds"])
-threshold_response_channel = int(c["DISCORD"]["threshold_response_channel"])
 e_channel = int(c["DISCORD"]["error_channel"])
 intents = discord.Intents.default()
 intents.messages = True
@@ -139,11 +138,13 @@ async def list_all_balances(interaction: discord.Interaction):
         token = database.get_token_abr_by_network(db_connection, network)
 
         if addresses != {}:
-            response += f"The following addresses are being watched on **{network_name}**:\n"
+            response += f"-- **{network_name}**:\n"
             for addr in addresses:
-                response += f"{addresses[addr]} ({addr[:6]}...{addr[-4:]}) has a balance of {balances[addr]} {token}\n"
+                response += f"**{addresses[addr]} ({addr[:6]}...{addr[-4:]})**: {balances[addr]} {token}\n"
 
             response += "\n"
+    if response == "":
+        response = "No addresses are being tracked."
     await interaction.response.send_message(response, ephemeral=ephemeral)
     db_connection.close()
 

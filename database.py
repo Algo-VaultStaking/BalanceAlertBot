@@ -110,8 +110,21 @@ def initial_setup():
         cur.execute(f"INSERT INTO Thresholds VALUES(420, 0.5, 454734546869551114);")
         cur.execute(f"INSERT INTO Thresholds VALUES(100, 0.5, 454734546869551114);")
 
+        cur.execute(f"INSERT INTO Thresholds VALUES(1, 0.5, 992549151134982234);")
+        cur.execute(f"INSERT INTO Thresholds VALUES(5, 0.5, 992549151134982234);")
+        cur.execute(f"INSERT INTO Thresholds VALUES(56, 0.5, 992549151134982234);")
+        cur.execute(f"INSERT INTO Thresholds VALUES(97, 0.5, 992549151134982234);")
+        cur.execute(f"INSERT INTO Thresholds VALUES(137, 0.5, 992549151134982234);")
+        cur.execute(f"INSERT INTO Thresholds VALUES(80001, 0.5, 992549151134982234);")
+        cur.execute(f"INSERT INTO Thresholds VALUES(42161, 0.5, 992549151134982234);")
+        cur.execute(f"INSERT INTO Thresholds VALUES(421611, 0.5, 992549151134982234);")
+        cur.execute(f"INSERT INTO Thresholds VALUES(10, 0.5, 992549151134982234);")
+        cur.execute(f"INSERT INTO Thresholds VALUES(420, 0.5, 992549151134982234);")
+        cur.execute(f"INSERT INTO Thresholds VALUES(100, 0.5, 992549151134982234);")
+
         cur.execute(f"INSERT INTO Guilds VALUES(837853470136467517, 1001486994511237120);")  # Vault Staking
-        cur.execute(f"INSERT INTO Guilds VALUES(454734546869551114, 953971443996180510);")  # Connext
+        cur.execute(f"INSERT INTO Guilds VALUES(454734546869551114, 953971443996180510);")  # Connext Public
+        cur.execute(f"INSERT INTO Guilds VALUES(992549151134982234, 953971443996180510);")  # Connext Private
 
         conn.commit()
 
