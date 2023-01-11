@@ -26,15 +26,16 @@ async def on_ready():
     print(f'Logged in as {bot.user} (ID: {bot.user.id})')
     print('-----------------')
     print("ready")
+
     check_thresholds.start()
 
 
-@tasks.loop(minutes=10)
+@tasks.loop(minutes=1)
 async def check_thresholds():
     db_connection = database.get_db_connection()
 
     await bot.wait_until_ready()
-    print("updating validators")
+    print("checking_thresholds")
 
     for guild in guilds:
         guild = int(guild)
@@ -51,13 +52,22 @@ async def check_thresholds():
 
                 if (balance < threshold) and not alerting:
                     contacts = database.get_contacts_by_address(db_connection, address, guild)
-                    await threshold_channel.send(f"{contacts}, **{addresses[address]} ({address[:6]}...{address[-4:]})** is below the threshold of {threshold} "
+                    if len(contacts) == 0 or contacts == "None":
+                        await threshold_channel.send(f"**{addresses[address]} ({address[:6]}...{address[-4:]})** is below the threshold of {threshold} "
                                                  f"{token_abr}. It currently has a balance of {round(balance, 3)} {token_abr}.")
+                    else:
+                        await threshold_channel.send(
+                            f"{contacts}, **{addresses[address]} ({address[:6]}...{address[-4:]})** is below the threshold of {threshold} "
+                            f"{token_abr}. It currently has a balance of {round(balance, 3)} {token_abr}.")
                     database.set_alerting_by_address(db_connection, network, address, True)
 
                 if (balance > threshold) and alerting:
                     contacts = database.get_contacts_by_address(db_connection, address, guild)
-                    await threshold_channel.send(f"{contacts}, **{addresses[address]} ({address[:6]}...{address[-4:]})** is back above the threshold of {threshold} "
+                    if len(contacts) == 0 or contacts == "None":
+                        await threshold_channel.send(f"**{addresses[address]} ({address[:6]}...{address[-4:]})** is below the threshold of {threshold} "
+                                                 f"{token_abr}. It currently has a balance of {round(balance, 3)} {token_abr}.")
+                    else:
+                        await threshold_channel.send(f"{contacts}, **{addresses[address]} ({address[:6]}...{address[-4:]})** is back above the threshold of {threshold} "
                                                  f"{database.get_token_abr_by_network(db_connection, network)}")
                     database.set_alerting_by_address(db_connection, network, address, False)
 

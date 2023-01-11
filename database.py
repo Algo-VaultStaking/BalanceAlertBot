@@ -361,7 +361,6 @@ def get_balances_by_network(db_connection, network: int, guild: int):
 
 
 def get_balance(network: int, address: str):
-    start = datetime.datetime.now()
     rpc_url = ""
 
     if network == 1:
@@ -390,8 +389,6 @@ def get_balance(network: int, address: str):
         return
 
     w3 = Web3(Web3.HTTPProvider(rpc_url))
-    end = datetime.datetime.now()
-    print(f"retrieved balance of {address} in: " + str(end - start))
     balance = int(w3.eth.getBalance(address)) / int(1e18)
 
     return balance
