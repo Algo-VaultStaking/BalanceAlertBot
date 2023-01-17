@@ -1,4 +1,5 @@
 import configparser
+import datetime
 import json
 
 import discord
@@ -35,7 +36,7 @@ async def check_thresholds():
     db_connection = database.get_db_connection()
 
     await bot.wait_until_ready()
-    print("checking_thresholds")
+    print(f"checking_thresholds: {datetime.datetime.now()}")
 
     for guild in guilds:
         guild = int(guild)
