@@ -362,11 +362,12 @@ def get_balances_by_network(db_connection, network: int, guild: int):
 
 def get_balance(network: int, address: str):
     rpc_url = ""
+    # 5669c7eb29464cbe8957e4ca088a05a6
 
     if network == 1:
-        rpc_url = "https://mainnet.infura.io/v3/5669c7eb29464cbe8957e4ca088a05a6"
+        rpc_url = "https://mainnet.infura.io/v3/fe48532ecb714c8fb0fcdb6774f729e6"
     elif network == 5:
-        rpc_url = "https://goerli.infura.io/v3/5669c7eb29464cbe8957e4ca088a05a6"
+        rpc_url = "https://goerli.infura.io/v3/fe48532ecb714c8fb0fcdb6774f729e6"
     elif network == 56:
         rpc_url = "https://bsc-dataseed1.binance.org/"
     elif network == 97:
@@ -376,13 +377,13 @@ def get_balance(network: int, address: str):
     elif network == 80001:
         rpc_url = "https://rpc-mumbai.maticvigil.com"
     elif network == 42161:
-        rpc_url = "https://arbitrum-mainnet.infura.io/v3/5669c7eb29464cbe8957e4ca088a05a6"
+        rpc_url = "https://arbitrum-mainnet.infura.io/v3/fe48532ecb714c8fb0fcdb6774f729e6"
     elif network == 421611:
-        rpc_url = "https://arbitrum-goerli.infura.io/v3/5669c7eb29464cbe8957e4ca088a05a6"
+        rpc_url = "https://arbitrum-goerli.infura.io/v3/fe48532ecb714c8fb0fcdb6774f729e6"
     elif network == 10:
-        rpc_url = "https://optimism-mainnet.infura.io/v3/5669c7eb29464cbe8957e4ca088a05a6"
+        rpc_url = "https://optimism-mainnet.infura.io/v3/fe48532ecb714c8fb0fcdb6774f729e6"
     elif network == 420:
-        rpc_url = "https://optimism-goerli.infura.io/v3/5669c7eb29464cbe8957e4ca088a05a6"
+        rpc_url = "https://optimism-goerli.infura.io/v3/fe48532ecb714c8fb0fcdb6774f729e6"
     elif network == 100:
         rpc_url = "http://gnosis-rpc.vaultstaking.com:8545"
     else:
