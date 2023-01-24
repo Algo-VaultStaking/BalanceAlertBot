@@ -75,7 +75,7 @@ async def check_thresholds():
                             f"{database.get_token_abr_by_network(db_connection, network)}")
                     database.set_alerting_by_address(db_connection, network, address, False)
     await bot.change_presence(
-        activity=discord.Activity(type=discord.ActivityType.watching, name=f"the time: {now}"))
+        activity=discord.Activity(type=discord.ActivityType.watching, name=f"the time: {now.strftime('%H:%M:%S %m/%d')}"))
     db_connection.close()
     return
 
