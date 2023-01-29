@@ -30,7 +30,7 @@ async def on_ready():
     check_thresholds.start()
 
 
-@tasks.loop(seconds=180)
+@tasks.loop(minutes=5)
 async def check_thresholds():
     db_connection = database.get_db_connection()
 
@@ -74,9 +74,9 @@ async def check_thresholds():
                             f"{contacts}, **{addresses[address]} ({address[:6]}...{address[-4:]})** is back above the threshold of {threshold} "
                             f"{database.get_token_abr_by_network(db_connection, network)}")
                     database.set_alerting_by_address(db_connection, network, address, False)
-    await bot.change_presence(
-        activity=discord.Activity(type=discord.ActivityType.watching, name=f"the time: {now.strftime('%H:%M:%S %m/%d')}"))
     db_connection.close()
+    await bot.change_presence(
+        activity=discord.Activity(type=discord.ActivityType.watching, name=f"the time: {now.strftime('%H:%M, %m/%d')}"))
     return
 
 
