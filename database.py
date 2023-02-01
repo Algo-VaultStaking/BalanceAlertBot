@@ -362,28 +362,31 @@ def get_balances_by_network(db_connection, network: int, guild: int):
 
 def get_balance(network: int, address: str):
     rpc_url = ""
-    # 5669c7eb29464cbe8957e4ca088a05a6
+    c = configparser.ConfigParser()
+    c.read("config.ini", encoding='utf-8')
+
+    infura_key = str(c["GENERAL"]["infura_key"])
 
     if network == 1:
-        rpc_url = "https://mainnet.infura.io/v3/fe48532ecb714c8fb0fcdb6774f729e6"
+        rpc_url = f"https://mainnet.infura.io/v3/{infura_key}"
     elif network == 5:
-        rpc_url = "https://goerli.infura.io/v3/fe48532ecb714c8fb0fcdb6774f729e6"
+        rpc_url = f"https://goerli.infura.io/v3/{infura_key}"
     elif network == 56:
-        rpc_url = "https://bsc-dataseed1.binance.org/"
+        rpc_url = f"https://bsc-dataseed1.binance.org/"
     elif network == 97:
-        rpc_url = "https://data-seed-prebsc-1-s1.binance.org:8545"
+        rpc_url = f"https://data-seed-prebsc-1-s1.binance.org:8545"
     elif network == 137:
-        rpc_url = "https://polygon-rpc.com"
+        rpc_url = f"https://polygon-rpc.com"
     elif network == 80001:
-        rpc_url = "https://rpc-mumbai.maticvigil.com"
+        rpc_url = f"https://rpc-mumbai.maticvigil.com"
     elif network == 42161:
-        rpc_url = "https://arbitrum-mainnet.infura.io/v3/fe48532ecb714c8fb0fcdb6774f729e6"
+        rpc_url = f"https://arbitrum-mainnet.infura.io/v3/{infura_key}"
     elif network == 421611:
-        rpc_url = "https://arbitrum-goerli.infura.io/v3/fe48532ecb714c8fb0fcdb6774f729e6"
+        rpc_url = f"https://arbitrum-goerli.infura.io/v3/{infura_key}"
     elif network == 10:
-        rpc_url = "https://optimism-mainnet.infura.io/v3/fe48532ecb714c8fb0fcdb6774f729e6"
+        rpc_url = f"https://optimism-mainnet.infura.io/v3/{infura_key}"
     elif network == 420:
-        rpc_url = "https://optimism-goerli.infura.io/v3/fe48532ecb714c8fb0fcdb6774f729e6"
+        rpc_url = f"https://optimism-goerli.infura.io/v3/{infura_key}"
     elif network == 100:
         rpc_url = "http://gnosis-rpc.vaultstaking.com:8545"
     else:
