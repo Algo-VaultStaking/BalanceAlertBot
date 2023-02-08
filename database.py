@@ -376,9 +376,10 @@ def get_balance(network: int, address: str):
     elif network == 97:
         rpc_url = f"https://data-seed-prebsc-1-s1.binance.org:8545"
     elif network == 137:
-        rpc_url = f"https://polygon-rpc.com"
+        rpc_url = f"https://polygon-mainnet.infura.io/v3/{infura_key}"
     elif network == 80001:
-        rpc_url = f"https://rpc-mumbai.maticvigil.com"
+        rpc_url = f"https://polygon-mumbai.infura.io/v3/{infura_key}"
+        # rpc_url = f"https://rpc-mumbai.maticvigil.com"
     elif network == 42161:
         rpc_url = f"https://arbitrum-mainnet.infura.io/v3/{infura_key}"
     elif network == 421611:
